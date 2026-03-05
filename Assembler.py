@@ -51,7 +51,7 @@ def ierror(s):
     x=s.split()
     if(len(x)!=2):
         return 1
-    if(x[0] in ["addi","sltiu"]):
+    if(x[0] in ["addi","sltiu","jalr"]):
         x1=x[1].split(",")
         if(len(x1)!=3):
             return 1
@@ -184,7 +184,7 @@ def itype(s):
     if(flag==1):
         return 0
     x=s.split()
-    if(x[0] in ["addi","sltiu"]):
+    if(x[0] in ["addi","sltiu","jalr"]):
        x1=x[1].split(",")
        imm=f"{int(x1[2]) & 0xFFF:012b}"
        if(x1[0][0]=='x'):
