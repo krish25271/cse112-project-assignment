@@ -277,7 +277,7 @@ def Jtype(instr):
     while len(ra)<5:
         ra="0"+ra
 
-    imm_int = label_location - PC;
+    imm_int = label_location - PC
     imm_str, imm_str_temp = '',''
     if imm_int < 0:
         imm_str_temp = str(bin(imm_int))[3:]
