@@ -86,6 +86,81 @@ def ierror(s):
             return 1
     return 0
 
+
+def RTYPE(instruction):
+    inst1=instruction.split()
+    if(len(inst1)!=2):
+        return False
+    inst2=instruction.split(",")
+    if(len(inst2)!=3):
+        return False
+    if instruction.count(",") !=2:
+        return False
+    tokens = re.split(r"[ ,]+",instruction)
+    instr=tokens[0]
+    rd=tokens[1]
+    rs1=tokens[2]
+    rs2=tokens[3]
+    opcode="0110011"
+    result=[]
+    isfound=False
+    is_register1_valid=False
+    is_register2_valid=False
+    is_register3_valid=False
+    Semantics={
+        "add":["0000000","000"],
+        "sub":["0100000","000"],
+        "sll":["0000000","001"],
+        "slt":["0000000","010"],
+        "sltu":["0000000","011"],
+        "xor":["0000000","100"],
+        "srl":["0000000","101"],
+        "or":["0000000","110"],
+        "and":["0000000","111"],
+    }
+    for reg in Registers.keys():
+        if(rs1==reg):
+            rs1=Registers[reg]
+            is_register1_valid=True
+        if(rs2==reg):
+            rs2=Registers[reg]
+            is_register2_valid=True
+        if(rd==reg):
+            rd=Registers[reg]
+            is_register3_valid=True
+    if rs1[0]=="x":
+        rs1=rs1[1:]
+        is_register1_valid=True
+    if rs2[0]=="x":
+        rs2=rs2[1:]
+        is_register2_valid=True
+    if rd[0]=="x":
+        rd=rd[1:]
+        is_register3_valid=True
+    if (not(is_register1_valid and is_register2_valid and is_register3_valid)):
+        return False
+    rs1=bin(int(rs1))[2:].zfill(5)
+    rs2=bin(int(rs2))[2:].zfill(5)
+    rd=bin(int(rd))[2:].zfill(5)
+    for intr in Semantics.keys():
+        if(instr.lower()==intr.lower()):
+            func7=Semantics[intr][0]
+            func3=Semantics[intr][1]
+            isfound=True
+            break
+    if(isfound):
+        result.append(func7)        
+        result.append(rs2)
+        result.append(rs1)
+        result.append(func3)
+        result.append(rd)
+        result.append(opcode)
+        return "".join(result)
+    else:
+        return False
+
+
+
 def uerror(s):
     x=s.split()
     if(len(x)!=2):
