@@ -65,13 +65,13 @@ def B_type(instruction,rs1,rs2,PC_address,label_address):
     
     def decode_B_type(instruction,rs1,rs2,immediate):
         if instruction not in B_instructions:
-            raise ValueError
+            return False
         
         if rs1 not in registers or rs2 not in registers:
-            raise ValueError
+            return False
 
         if immediate < -4096 or immediate > 4094:
-            raise ValueError
+            return False
         
         immediate=immediate>>1
         rs1_bin=format(registers[rs1],"05b")
@@ -86,7 +86,6 @@ def B_type(instruction,rs1,rs2,PC_address,label_address):
         func3=B_instructions[instruction]
 
         bin_inst=imm_12 + imm_10_5 + rs1_bin + rs2_bin + func3 + imm_4_1 + imm_11 + B_opcode
-        immediate=immediate<<1
         
         return bin_inst
 
