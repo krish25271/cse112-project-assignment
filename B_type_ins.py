@@ -35,8 +35,32 @@ Register_main={
         "t6":"x31",
     }
 
+def check_B_type_validity(line):
+    mnemonics = {"beq","bne","blt","bge","bltu","bgeu"}
+    line=line.replace(","," , ")
+    print(line)
+    parts = line.split()
 
-def B_type(instruction,rs1,rs2,PC_address,label_address):
+    if len(parts) != 6:
+        return False
+
+    mnemonic = parts[0]
+    rs1 = parts[1]
+    rs2 = parts[3]
+    label = parts[5]
+
+    if parts[2]!=',' or parts[4]!=',':
+        return False
+
+    if mnemonic not in mnemonics:
+        return False
+
+    if rs1 not in Register_main or rs2 not in Register_main:
+        return False
+
+    return True
+
+def B_type(instructions,PC_address,label_address):
     B_instructions={
         "beq":  "000",
         "bne":  "001",
@@ -45,6 +69,13 @@ def B_type(instruction,rs1,rs2,PC_address,label_address):
         "bltu": "110",
         "bgeu": "111"
     }
+    if check_B_type_validity(instructions)==False:
+        return False
+    instructions=instructions.replace(',',' , ')
+    instruction=instructions.split()[0]
+    rs1=instructions.split()[1]
+    rs2=instructions.split()[3]
+
     registers = {
         f"x{i}": i for i in range(32)
     }
@@ -92,7 +123,8 @@ def B_type(instruction,rs1,rs2,PC_address,label_address):
     Decoded_instruction=decode_B_type(instruction,rs1,rs2,immediate)
     return Decoded_instruction
 
-
+binary=B_type("beq a0,t1,label",16,24)
+print("binary:",binary)
 
 
     
