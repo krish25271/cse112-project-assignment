@@ -312,8 +312,8 @@ def Stype(instr):
         if register not in Registers.keys():
             if register not in Registers.values():
                 flag = False
-            else:
-                register = Registers[register]
+        else:
+            register = Registers[register]
 
         #imm(src) validity
         if '(' not in rest or ')' not in rest:
@@ -343,6 +343,9 @@ def Stype(instr):
     
     data = int(register[1:])
     data = str(bin(data))[2:]
+    while len(data)<5:
+        data="0"+data
+    
     imm_bin = int(imm_str)
     if imm_bin < 0:
         imm_bin = str(bin(imm_bin))[3:]
@@ -355,6 +358,8 @@ def Stype(instr):
     
     src = int(src[1:])
     src = str(bin(src))[2:]
+    while len(src)<5:
+        src="0"+src
 
     bin_instr = imm_bin[-12:-5]+data+src+funct3+imm_bin[-5:-1]+imm_bin[-1]+opcode
     return bin_instr
