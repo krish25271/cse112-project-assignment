@@ -1,3 +1,17 @@
+program_memory_limit = 0x000000FF
+data_memory_limit = [0x00010000,0x0001007F]
+sp = 0x0000017F
+
+def register_valid(rs1):
+    pass   #returns boolean 
+
+def imm_valid(imm):
+    pass    #returns boolean
+
+def halt_valid():
+    pass    #returns boolean
+
+#instruction_functions
 import re
 d= {
     "zero": "x0",
@@ -34,12 +48,6 @@ d= {
     "t5": "x30",
     "t6": "x31"
 }
-l = [
-    "x0","x1","x2","x3","x4","x5","x6","x7",
-    "x8","x9","x10","x11","x12","x13","x14","x15",
-    "x16","x17","x18","x19","x20","x21","x22","x23",
-    "x24","x25","x26","x27","x28","x29","x30","x31"
-]
 def ierror(s):
     x=s.split()
     if(len(x)!=2):
@@ -48,7 +56,7 @@ def ierror(s):
         x1=x[1].split(",")
         if(len(x1)!=3):
             return 1
-        if((x1[0] not in l and x1[0] not in d) or (x1[1] not in l and x1[1] not in d)):
+        if((x1[0] not in d.values() and x1[0] not in d) or (x1[1] not in d.values() and x1[1] not in d)):
             return 1
         if((x1[2].lstrip("-")).isdecimal()):
             if(-(2**11)<=int(x1[2])<=(2**11)-1):
@@ -68,7 +76,7 @@ def ierror(s):
         x1=re.split(",|\(|\)",x[1])
         if(len(x1)!=4):
             return 1
-        if((x1[0] not in l and x1[0] not in d) or (x1[2] not in l and x1[2] not in d)):
+        if((x1[0] not in d.values() and x1[0] not in d) or (x1[2] not in d.values() and x1[2] not in d)):
             return 1
         if((x1[1].lstrip("-")).isdecimal()):
             if(-(2**11)<=int(x1[1])<=(2**11)-1):
@@ -85,7 +93,7 @@ def uerror(s):
     x1=x[1].split(",")
     if(len(x1)!=2):
         return 1
-    if(x1[0] not in l and x1[0] not in d):
+    if(x1[0] not in d.values() and x1[0] not in d):
         return 1
     if((x1[1].lstrip("-")).isdecimal()):
         if(-(2**19)<=int(x1[1])<=(2**19)-1):
@@ -168,3 +176,5 @@ def utype(s):
 
 
     
+
+#main body starts
