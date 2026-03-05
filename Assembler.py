@@ -289,7 +289,6 @@ def Stype(instr):
 def check_B_type_validity(line):
     mnemonics = {"beq","bne","blt","bge","bltu","bgeu"}
     line=line.replace(","," , ")
-    print(line)
     parts = line.split()
 
     if len(parts) != 6:
