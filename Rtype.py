@@ -71,8 +71,7 @@ def RTYPE(instr,rd,rs1,rs2):
         rd=rd[1:]
         is_register3_valid=True
     if (not(is_register1_valid and is_register2_valid and is_register3_valid)):
-        print("Not valid registers")
-        return
+        return False
     rs1=bin(int(rs1))[2:].zfill(5)
     rs2=bin(int(rs2))[2:].zfill(5)
     rd=bin(int(rd))[2:].zfill(5)
@@ -83,15 +82,17 @@ def RTYPE(instr,rd,rs1,rs2):
             isfound=True
             break
     if(isfound):
-        result.append(func7)
+        result.append(func7)        
         result.append(rs2)
         result.append(rs1)
         result.append(func3)
         result.append(rd)
         result.append(opcode)
-        print("".join(result))
+        return "".join(result)
     else:
-        print("Instruction Not Found")
-RTYPE("xor","x2","t2","zero")
+        return False
 
+
+
+print(RTYPE("add","x2","x1","a0"))
 
