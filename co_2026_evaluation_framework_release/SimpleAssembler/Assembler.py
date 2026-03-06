@@ -423,7 +423,7 @@ def check_B_type_validity(line):
         return False
     return True
 
-def B_type(instructions,PC_address,label_address):
+def B_type(instructions,PC_address):
     B_instructions={
         "beq":  "000",
         "bne":  "001",
@@ -437,7 +437,9 @@ def B_type(instructions,PC_address,label_address):
     instructions=instructions.replace(',',' , ')
     instruction=instructions.split()[0]
     rs1=instructions.split()[1]
+    Label=instructions.split()[5]
     rs2=instructions.split()[3]
+    label_address=Labels[Label]
 
     registers = {
         f"x{i}": i for i in range(32)
@@ -485,3 +487,101 @@ def B_type(instructions,PC_address,label_address):
 
     Decoded_instruction=decode_B_type(instruction,rs1,rs2,immediate)
     return Decoded_instruction
+
+
+
+def READFILE():
+    with open("test1.txt","r") as f:
+        global lines
+        lines=f.readlines()
+
+def identify_instruction(instruction):
+    instruct=re.split(r"[ ,:]+",instruction)
+    if (instruct[0] in Labels.keys()):
+        instructs=instruct[1]
+    else:
+        instructs=instruct[0]
+    Instruction_types={"R":["add","sub","sll","slt","sltu","xor","srl","or","and"],
+                       "I":["lw","addi","sltiu","jalr"],
+                       "S":["sw"],
+                       "B":["beq","bne","blt","bge","bltu","bgeu"],
+                       "U":["lui","auipc"],
+                       "J":["jal"]
+                       }
+    for i in Instruction_types:
+        if instructs in Instruction_types[i]:
+            return i
+        
+    return False
+
+
+def find_label():
+    global lines
+    temp1=PC
+    for i in range(len(lines)):
+        if ':' in lines[i]:
+            temp = re.split(r"[:]+",lines[i])
+            Labels[temp[0]] = temp1
+            for j in range(len(lines[i])):
+                if lines[i][j] == ":":
+                    break
+            lines[i] = lines[i][j+2:]
+        temp1+=4
+            
+def MAIN():
+    global PC
+    READFILE()
+    find_label()
+    f=open("output.txt","a")
+    num=0
+    for instr in lines:
+        type_of_inst=identify_instruction(lines[num])
+        instr=instr.rstrip("\n")
+        num=num+1
+        if(type_of_inst)==False:
+            f.write(f"Line->{num}SyntaxError PC->{PC}")
+            return
+        if(type_of_inst)=="R":
+            binary=RTYPE(instr)
+            if(binary)==False:
+                f.write(f"Line->{num} SyntaxError PC->{PC}")
+                return
+            else:
+                f.write(f"{binary}\n")
+        elif(type_of_inst)=="B":
+            binary=B_type(instr,PC)
+            if(binary)==False:
+                f.write(f"Line->{num} SyntaxError PC->{PC}")
+                return
+            else:
+                f.write(f"{binary}\n")
+        elif(type_of_inst)=="J":
+            binary=Jtype(instr)
+            if(binary)==False:
+                f.write(f"Line->{num}SyntaxError PC->{PC}")
+                return
+            else:
+                f.write(f"{binary}\n")
+        elif(type_of_inst)=="S":
+            binary=Stype(instr)
+            if(binary)==False:
+                f.write(f"Line->{num} SyntaxError PC->{PC}")
+                return
+            else:
+                f.write(f"{binary}\n")
+        elif(type_of_inst)=="I":
+            binary=itype(instr)
+            if(binary)==False:
+                f.write(f"Line-> {num} SyntaxError PC->{PC}")
+                return
+            else:
+                f.write(f"{binary}\n")
+        elif(type_of_inst)=="U":
+            binary=utype(instr)
+            if(binary)==False:
+                f.write(f"Line->{num}SyntaxError PC->{PC}")
+                return
+            else:
+                f.write(f"{binary}\n")
+        PC=PC+4
+MAIN()
