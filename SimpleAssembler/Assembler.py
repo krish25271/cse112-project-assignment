@@ -174,7 +174,8 @@ def RTYPE(instruction):
 #to check errors in I type instruction (return 1 if error and 0 otherwise)
 def ierror(s):
     x=s.split()    #splitting instruction on space
-    if(len(x)!=2):      #to check if there is just 1 space
+    x=[i for i in x if i != ""]
+    if(len(x)!=2):      
         return 1
     if(x[0] in ["addi","sltiu","jalr"]):   
         x1=x[1].split(",")
@@ -182,8 +183,9 @@ def ierror(s):
             return 1
         if((x1[0] not in d.values() and x1[0] not in d) or (x1[1] not in d.values() and x1[1] not in d)):    #to check if register names are valid names
             return 1
-        if((x1[2].lstrip("-")).isdecimal()):                    
-            if(-(2**11)<=int(x1[2])<=(2**11)-1):        #to check if immediate is of 12 bits
+        flag,imm_int=immediate(x1[2])           #to convert immediate to its integer ewuivalent
+        if(flag):                    
+            if(-(2**11)<=imm_int<=(2**11)-1):        #to check if immediate is of 12 bits
                 pass
             else:
                 return 1
@@ -202,8 +204,9 @@ def ierror(s):
             return 1
         if((x1[0] not in d.values() and x1[0] not in d) or (x1[2] not in d.values() and x1[2] not in d)):  #to check if register names are valid names
             return 1
-        if((x1[1].lstrip("-")).isdecimal()):
-            if(-(2**11)<=int(x1[1])<=(2**11)-1):                      #to check if immediate is of 12 bits
+        flag,imm_int=immediate(x1[1])           #to convert immediate to its integer ewuivalent
+        if(flag):                    
+            if(-(2**11)<=imm_int<=(2**11)-1):                      #to check if immediate is of 12 bits
                 pass
             else:
                 return 1
@@ -214,15 +217,17 @@ def ierror(s):
 #to check erros in U type instructions (returns 1 if error and 0 otherwise)
 def uerror(s):
     x=s.split()       #splitting instruction on space
-    if(len(x)!=2):    #to check if there is just 1 space
+    x=[i for i in x if i != ""]
+    if(len(x)!=2):   
         return 1
     x1=x[1].split(",")    # splitting instruction on comma
     if(len(x1)!=2):       #to check if there is 1 comma
         return 1
     if(x1[0] not in d.values() and x1[0] not in d):    #to check if register names are valid names
         return 1
-    if((x1[1].lstrip("-")).isdecimal()):
-        if(-(2**19)<=int(x1[1])<=(2**19)-1):      #to check if immediate is of 20 bits
+    flag,imm_int=immediate(x1[1])           #to convert immediate to its integer ewuivalent
+    if(flag):                    
+        if(-(2**19)<=imm_int<=(2**19)-1):      #to check if immediate is of 20 bits
             pass
         else:
             return 1
@@ -235,9 +240,11 @@ def itype(s):
     if(flag==1):
         return 0
     x=s.split()                 # splitting on space
+    x=[i for i in x if i != ""]
     if(x[0] in ["addi","sltiu","jalr"]):
-       x1=x[1].split(",")                 #splitting on commas
-       imm=f"{int(x1[2]) & 0xFFF:012b}"    #to convert immediate in 12 bits binary
+       x1=x[1].split(",")                     #splitting on commas
+       flag,imm_int=immediate(x1[2])                
+       imm=f"{imm_int & 0xFFF:012b}"    #to convert immediate in 12 bits binary
        if(x1[0][0]=='x'):                    #to check if the naming of rd register is ABI naming or not
            rd=x1[0].lstrip("x")
        else:
@@ -262,7 +269,8 @@ def itype(s):
        return imm+rs+func3+rd+opcode
     else:
         x1 = re.split(r"[(),]", x[1])       #splitting on "," ,")","("
-        imm=f"{int(x1[1]) & 0xFFF:012b}"    #to convert immediate in 12 bits binary
+        flag,imm_int=immediate(x1[1])  
+        imm=f"{imm_int & 0xFFF:012b}"    #to convert immediate in 12 bits binary
         if(x1[0][0]=='x'):                   #to check if the naming of rd register is ABI naming or not
             rd=x1[0].lstrip("x") 
         else:
@@ -282,8 +290,10 @@ def utype(s):
     if(flag==1):
         return 0
     x=s.split()         #splitting on space
+    x=[i for i in x if i != ""]
     x1=x[1].split(",")           #splitting on commas
-    imm=f"{int(x1[1]) & 0xFFFFF:020b}"     #converting immediate to 20 bits binary
+    flag,imm_int=immediate(x1[1])  
+    imm=f"{imm_int & 0xFFFFF:020b}"     #converting immediate to 20 bits binary
     if(x1[0][0]=='x'):                     #to check if the naming of rd register is ABI naming or not
         rd=x1[0].lstrip("x")
     else:
