@@ -45,12 +45,7 @@ d= {
 }
 Registers = d
 
-
-def halt_valid():
-    pass    #returns boolean
-
 #instruction_functions
-
 def RTYPE(instruction):
     inst1=instruction.split()   #split on the basis of space 
     islabel=False
@@ -402,8 +397,6 @@ def Stype(instr):
     bin_instr = imm_bin[-12:-5]+data+src+funct3+imm_bin[-5:-1]+imm_bin[-1]+opcode
     return bin_instr
 
-#main body starts
-
 def check_B_type_validity(line):
     mnemonics = {"beq","bne","blt","bge","bltu","bgeu"}
     line=line.replace(","," , ")
@@ -495,7 +488,7 @@ def B_type(instructions,PC_address):
     Decoded_instruction=decode_B_type(instruction,rs1,rs2,immediate)
     return Decoded_instruction
 
-
+#main body starts
 
 def READFILE():
     with open("test1.txt","r") as f:
@@ -520,7 +513,6 @@ def identify_instruction(instruction):
             return i
         
     return False
-
 
 def find_label():
     global lines
