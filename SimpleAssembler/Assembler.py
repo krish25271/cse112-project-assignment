@@ -280,18 +280,18 @@ def utype(s):
 def identify_instruction(instruction):
     instruct=re.split(r"[ ,:]+",instruction)
     if (instruct[0] in Labels.keys()):
-        instructs=instruct[1]
+        instructs=instruct[1]                  #Find if instruction is label or not and choose appropriate instruction to check
     else:
-        instructs=instruct[0]
+        instructs=instruct[0]              #if it not label it directly take the starting index
     Instruction_types={"R":["add","sub","sll","slt","sltu","xor","srl","or","and"],
                        "I":["lw","addi","sltiu","jalr"],
-                       "S":["sw"],
+                       "S":["sw"],                                              #dictionary of instruction
                        "B":["beq","bne","blt","bge","bltu","bgeu"],
                        "U":["lui","auipc"],
                        "J":["jal"]
                        }
     for i in Instruction_types:
-        if instructs in Instruction_types[i]:
+        if instructs in Instruction_types[i]:                           #finding the appropriate function type
             return i
         
     return False
