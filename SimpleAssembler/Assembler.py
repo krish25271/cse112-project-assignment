@@ -1,4 +1,5 @@
 import re
+import sys
 #Some Global Variables
 PC = 0x00000000
 Label_validity = {}  #key->Label-address;value->True/False
@@ -44,6 +45,110 @@ d= {
     "t6": "x31"
 }
 Registers = d
+
+def RTYPE(instruction):
+    inst1=instruction.split()   #split on the basis of space 
+    islabel=False
+    if(instruction.count(",")!=2):     #check whether no of comma is correct or not
+        return False
+    tokens = re.split(r"[ ,:]+",instruction)
+    if (tokens[0] in Labels.keys()):                    #check whether there is a label or not
+        instr=tokens[1]
+        rd=tokens[2]
+        rs1=tokens[3]
+        rs2=tokens[4]
+        islabel=True
+        splits=instruction.split(":")
+        instruction=splits[1]
+        instruction=instruction.strip()
+    else:
+        instr=tokens[0]
+        rd=tokens[1]
+        rs1=tokens[2]
+        rs2=tokens[3]
+    if(islabel):                      #if label then the checking valididty of code is different
+        if(len(tokens)!=5):
+            return False
+        if(len(inst1)!=3):
+            return False
+        comma_check=instruction
+        comma_check=comma_check.replace(" ","")
+        comma_check=comma_check.replace(",",", ")
+        comma_check=comma_check.split()
+        for i in comma_check[:-2]:
+            if("," not in i):
+                return False
+    else:
+        if(len(tokens)!=4):             #without label checking criteria
+            return False
+        if(len(inst1)!=2):
+            return False
+        comma_check=instruction
+        comma_check=comma_check.replace(" ","")      #comma postioning check
+        comma_check=comma_check.replace(",",", ")
+        comma_check=comma_check.split()
+        for i in comma_check[:-2]:
+            if("," not in i):
+                return False
+    opcode="0110011"
+    result=[]
+    isfound=False
+    is_register1_valid=False
+    is_register2_valid=False
+    is_register3_valid=False
+    Semantics={                                      #dict of semantics of different instruction func7 and func3 value
+        "add":["0000000","000"],
+        "sub":["0100000","000"],
+        "sll":["0000000","001"],
+        "slt":["0000000","010"],
+        "sltu":["0000000","011"],
+        "xor":["0000000","100"],
+        "srl":["0000000","101"],
+        "or":["0000000","110"],
+        "and":["0000000","111"],
+    }
+    for reg in Registers.keys():              #find the register values
+        if(rs1==reg):
+            rs1=Registers[reg]
+            is_register1_valid=True       
+        if(rs2==reg):
+            rs2=Registers[reg]
+            is_register2_valid=True
+        if(rd==reg):
+            rd=Registers[reg]
+            is_register3_valid=True
+    if rs1[0]=="x":
+        rs1=rs1[1:]
+        is_register1_valid=True
+    if rs2[0]=="x":
+        rs2=rs2[1:]
+        is_register2_valid=True
+    if rd[0]=="x":
+        rd=rd[1:]
+        is_register3_valid=True
+    if (not(is_register1_valid and is_register2_valid and is_register3_valid)):            #if any of the register is not valid then it will throw an error to main func
+          return False
+    rs1=bin(int(rs1))[2:].zfill(5)
+    rs2=bin(int(rs2))[2:].zfill(5)
+    rd=bin(int(rd))[2:].zfill(5)
+    for intr in Semantics.keys():             #find the appropriate value according to func7 and func3 
+        if(instr.lower()==intr.lower()):
+            func7=Semantics[intr][0]
+            func3=Semantics[intr][1]
+            isfound=True
+            break
+    if(isfound):                           #find the full 32 bit machine code
+        result.append(func7)        
+        result.append(rs2)
+        result.append(rs1)
+        result.append(func3)
+        result.append(rd)
+        result.append(opcode)
+        return "".join(result)
+    else:
+        return False
+
+
 
 def ierror(s):
     x=s.split()
@@ -172,7 +277,6 @@ def utype(s):
     else:
         opcode="0110111"
     return imm+rd+opcode
-
 def Jtype(instr):
     opcode = '1101111'      #opcode for j-type instr
 
@@ -313,3 +417,93 @@ def find_label():
             lines[i] = lines[i][j+2:]       #instruction without labels
             lines[i] = lines[i].strip()     #remove white spaces
         temp1+=4
+
+
+def identify_instruction(instruction):
+    instruct=re.split(r"[ ,:]+",instruction)
+    if (instruct[0] in Labels.keys()):
+        instructs=instruct[1]                  #Find if instruction is label or not and choose appropriate instruction to check
+    else:
+        instructs=instruct[0]              #if it not label it directly take the starting index
+    Instruction_types={"R":["add","sub","sll","slt","sltu","xor","srl","or","and"],
+                       "I":["lw","addi","sltiu","jalr"],
+                       "S":["sw"],                                              #dictionary of instruction
+                       "B":["beq","bne","blt","bge","bltu","bgeu"],
+                       "U":["lui","auipc"],
+                       "J":["jal"]
+                       }
+    for i in Instruction_types:
+        if instructs in Instruction_types[i]:                           #finding the appropriate function type
+            return i
+        
+    return False
+
+def MAIN():
+    global PC
+    assembly_file=sys.argv[1];
+    machine_code_file=sys.argv[2];
+    with open(assembly_file,"r") as f:
+        global lines
+        lines=f.readlines()
+    find_label()
+    f=open(machine_code_file,"w")
+    num=0
+    write_lst=[]
+    for instr in lines:
+        if(instr==""):
+            continue
+        type_of_inst=identify_instruction(lines[num])
+        instr=instr.rstrip("\n")
+        num=num+1
+        if PC in Label_validity and Label_validity[PC] == False:        #Invalid label, break
+            print(f"Line->{num} SyntaxError PC->{PC}")
+            break
+        if(type_of_inst)==False:
+            print(f"Line->{num} SyntaxError PC->{PC}")
+            return
+        if(type_of_inst)=="R":
+            binary=RTYPE(instr)
+            if(binary)==False:
+                print(f"Line->{num} SyntaxError PC->{PC}")
+                return
+            else:
+                write_lst.append(f"{binary}\n")
+        elif(type_of_inst)=="B":
+            binary=B_type(instr,PC)
+            if(binary)==False:
+                print(f"Line->{num} SyntaxError PC->{PC}")
+                return
+            else:
+                write_lst.append(f"{binary}\n")
+        elif(type_of_inst)=="J":
+            binary=Jtype(instr)
+            if(binary)==False:
+                print(f"Line->{num} SyntaxError PC->{PC}")
+                return
+            else:
+                write_lst.append(f"{binary}\n")
+        elif(type_of_inst)=="S":
+            binary=Stype(instr)
+            if(binary)==False:
+                print(f"Line->{num} SyntaxError PC->{PC}")
+                return
+            else:
+                write_lst.append(f"{binary}\n")
+        elif(type_of_inst)=="I":
+            binary=itype(instr)
+            if(binary)==False:
+                print(f"Line-> {num} SyntaxError PC->{PC}")
+                return
+            else:
+                write_lst.append(f"{binary}\n")
+        elif(type_of_inst)=="U":
+            binary=utype(instr)
+            if(binary)==False:
+                print(f"Line->{num} SyntaxError PC->{PC}")
+                return
+            else:
+                write_lst.append(f"{binary}\n")
+        PC=PC+4
+    f.writelines(write_lst)
+    
+MAIN()
