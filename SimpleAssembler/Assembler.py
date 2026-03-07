@@ -4,7 +4,7 @@ import sys
 PC = 0x00000000
 Label_validity = {}  #key->Label-address;value->True/False
 write_lst = []       #binary-encoding-lst (with errors)
-Labels = {}          #key->Label-name;value->Label-address
+Labels = {'0':0}          #key->Label-name;value->Label-address
 program_memory_limit = 0x000000FF
 data_memory_limit = [0x00010000,0x0001007F]
 sp = 0x0000017F
@@ -396,6 +396,97 @@ def Stype(instr):
     #Instruction encoding
     bin_instr = imm_bin[-12:-5]+data+src+funct3+imm_bin[-5:-1]+imm_bin[-1]+opcode
     return bin_instr
+
+def check_B_type_validity(line):
+    mnemonics = {"beq","bne","blt","bge","bltu","bgeu"}
+    line=line.replace(","," , ")
+    parts = line.split()
+
+    if len(parts) != 6:
+        return False
+
+    mnemonic = parts[0]
+    rs1 = parts[1]
+    rs2 = parts[3]
+    labels = parts[5]
+
+    if parts[2]!=',' or parts[4]!=',':# comma position check
+        return False
+
+    if mnemonic not in mnemonics:# Valid instruction type check
+        return False
+
+    if rs1 not in d or rs2 not in d:# Valid register type check
+        return False
+    
+    if labels not in Labels:# Valid Label check
+        return False
+    return True
+
+def B_type(instructions,PC_address):
+    B_instructions={
+        "beq":  "000",
+        "bne":  "001",
+        "blt":  "100",
+        "bge":  "101",
+        "bltu": "110",
+        "bgeu": "111"
+    }
+    if check_B_type_validity(instructions)==False:
+        return False
+    instructions=instructions.replace(',',' , ')#instructions=[instruction,rs1,',',rs2,',',label]
+    instruction=instructions.split()[0]
+    rs1=instructions.split()[1]
+    Label=instructions.split()[5]
+    rs2=instructions.split()[3]
+    label_address=Labels[Label]
+
+    registers = {
+        f"x{i}": i for i in range(32)
+    }
+
+
+    rs1=d[rs1]
+    rs2=d[rs2]
+    
+
+
+    B_opcode="1100011"
+
+    def find_Immediate(PC_address,label_address):
+        return label_address-PC_address
+    
+    immediate=find_Immediate(PC_address,label_address)
+
+    
+    def decode_B_type(instruction,rs1,rs2,immediate):
+        if instruction not in B_instructions:
+            return False
+        
+        if rs1 not in registers or rs2 not in registers:
+            return False
+
+        if immediate < -4096 or immediate > 4094:
+            return False
+        
+        immediate=immediate>>1
+        rs1_bin=format(registers[rs1],"05b")
+        rs2_bin=format(registers[rs2],"05b")
+        imm_bin=format(immediate & 0x1FFF,"013b")#sign extension of immediate
+
+        imm_12=imm_bin[0]
+        imm_10_5=imm_bin[1:7]
+        imm_4_1=imm_bin[7:11]
+        imm_11=imm_bin[11]
+
+        func3=B_instructions[instruction]
+
+        bin_inst=imm_12 + imm_10_5 + rs1_bin + rs2_bin + func3 + imm_4_1 + imm_11 + B_opcode# final instruction in binary
+        
+        return bin_inst
+
+    Decoded_instruction=decode_B_type(instruction,rs1,rs2,immediate)
+    return Decoded_instruction
 
 def find_label():
     global lines
