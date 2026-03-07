@@ -1,9 +1,13 @@
 import re
 #Some Global Variables
 PC = 0x00000000
+Label_validity = {}  #key->Label-address;value->True/False
+write_lst = []       #binary-encoding-lst (with errors)
+Labels = {}          #key->Label-name;value->Label-address
 program_memory_limit = 0x000000FF
 data_memory_limit = [0x00010000,0x0001007F]
 sp = 0x0000017F
+#Registers: key->ABI,value->x{i}
 d= {
     "zero": "x0",
     "ra": "x1",
@@ -40,7 +44,7 @@ d= {
     "t6": "x31"
 }
 Registers = d
-Labels = {}
+
 
 def halt_valid():
     pass    #returns boolean
@@ -278,11 +282,11 @@ def utype(s):
     return imm+rd+opcode
 
 def Jtype(instr):
-    opcode = '1101111'
+    opcode = '1101111'      #opcode for j-type instr
 
-    lst = instr.split()
+    lst = instr.split()     #components of instr
     ra = ''
-    
+    register,label = '',''
     #commas, space
     flag = True
     if (len(lst) != 2) or (lst[0] != "jal") or ("," not in lst[1]) or (len(lst[1].split(','))!=2 ):
@@ -298,18 +302,19 @@ def Jtype(instr):
                 flag = False
             else: pass
         else:
-            register = Registers[register]
+            register = Registers[register]      #ABI convention is changed to x{i}
                     
-    if flag == False:
+    if flag == False:       #if any error occurs, flag is False
         return flag
     
-    ra = int(register[1:])
+    ra = int(register[1:])          #{i} of x{i} changed to binary
     ra = str(bin(ra))[2:]
-    while len(ra)<5:
+    while len(ra)<5:                #extend to 5bits
         ra="0"+ra
 
-    imm_int = label_location - PC
+    imm_int = label_location - PC           #Immediate Calc
     imm_str, imm_str_temp = '',''
+    #Sign extension of imm-int into binary of 20 bits
     if imm_int < 0:
         imm_str_temp = str(bin(imm_int))[3:]
         while(len(imm_str_temp)<20):
@@ -317,18 +322,19 @@ def Jtype(instr):
     else:
         imm_str_temp = str(bin(imm_int))[2:]
         while(len(imm_str_temp)<20):
-            imm_str_temp = '0' + imm_str_temp
+            imm_str_temp = '0' + imm_str_temp 
     
+    #Format of immediate in j-type is imm-str
     imm_str = imm_str_temp[-20]+ imm_str_temp[-10:-1]+ imm_str_temp[-1]+ imm_str_temp[-11] + imm_str_temp[-19:-12] + imm_str_temp[-12]
     
-    bin_instr = imm_str + ra +opcode
+    bin_instr = imm_str + ra + opcode
     return bin_instr
 
 def Stype(instr):
-    opcode = '0100011'
+    opcode = '0100011'      #opcode and funct3 values for s-type instr
     funct3 = '010'
 
-    lst = instr.split()
+    lst = instr.split()     #components of instr
     data = ''
     src =''
     register, rest = '',''
@@ -344,21 +350,21 @@ def Stype(instr):
             if register not in Registers.values():
                 flag = False
         else:
-            register = Registers[register]
+            register = Registers[register]      #ABI changed to x{i}
 
         #imm(src) validity
-        if '(' not in rest or ')' not in rest:
+        if '(' not in rest or ')' not in rest:      #Parenthesis must be closed
             flag = False
         else:
-            open, close = 0,0
+            open, close = 0,0       #open is index("("), close is index(")")
             for a in range(len(rest)):
                 if rest[a] == '(':
                     if a == 0:
-                        flag = False
+                        flag = False        #if open = 0, imm is not provided
                     open = a
                 if rest[a] == ')':
                     close = a
-            if open>close:
+            if open>close:          #invalid parenthesis
                 flag = False
             else:
                 imm_str = rest[0:open]
@@ -367,18 +373,18 @@ def Stype(instr):
                     if src not in Registers.values():
                         flag = False
                 else:
-                    src = Registers[src]
+                    src = Registers[src]        #ABI changed to x{i}
 
     if flag == False:
         return flag
     
     data = int(register[1:])
     data = str(bin(data))[2:]
-    while len(data)<5:
+    while len(data)<5:      #Bit extension to 5
         data="0"+data
     
     imm_bin = int(imm_str)
-    if imm_bin < 0:
+    if imm_bin < 0:     #Sign extension of imm-bin to 12 bits
         imm_bin = str(bin(imm_bin))[3:]
         while(len(imm_bin)<12):
             imm_bin = '1' + imm_bin
@@ -389,9 +395,10 @@ def Stype(instr):
     
     src = int(src[1:])
     src = str(bin(src))[2:]
-    while len(src)<5:
+    while len(src)<5:       #Bit extension to 5
         src="0"+src
 
+    #Instruction encoding
     bin_instr = imm_bin[-12:-5]+data+src+funct3+imm_bin[-5:-1]+imm_bin[-1]+opcode
     return bin_instr
 
@@ -521,11 +528,18 @@ def find_label():
     for i in range(len(lines)):
         if ':' in lines[i]:
             temp = re.split(r"[:]+",lines[i])
-            Labels[temp[0]] = temp1
-            for j in range(len(lines[i])):
+            Labels[temp[0]] = temp1      #Label saved
+
+            for j in range(len(lines[i])):      #j is index(':')
                 if lines[i][j] == ":":
                     break
-            lines[i] = lines[i][j+2:]
+                
+            if temp[0][0].isalpha() and lines[i][j-1] != ' ':   #if first letter is not alphabet or if there is " " bw label and ":",# label invalid
+                Label_validity[temp1] = True
+            else:
+                Label_validity[temp1] = False
+            lines[i] = lines[i][j+2:]       #instruction without labels
+            lines[i] = lines[i].strip()     #remove white spaces
         temp1+=4
             
 def MAIN():
@@ -538,8 +552,11 @@ def MAIN():
         type_of_inst=identify_instruction(lines[num])
         instr=instr.rstrip("\n")
         num=num+1
+        if PC in Label_validity and Label_validity[PC] == False:        #Invalid label, break
+            write_lst.append(f"Line->{num} SyntaxError PC->{PC}")
+            break
         if(type_of_inst)==False:
-            f.write(f"Line->{num}SyntaxError PC->{PC}")
+            f.write(f"Line->{num} SyntaxError PC->{PC}")
             return
         if(type_of_inst)=="R":
             binary=RTYPE(instr)
@@ -558,7 +575,7 @@ def MAIN():
         elif(type_of_inst)=="J":
             binary=Jtype(instr)
             if(binary)==False:
-                f.write(f"Line->{num}SyntaxError PC->{PC}")
+                f.write(f"Line->{num} SyntaxError PC->{PC}")
                 return
             else:
                 f.write(f"{binary}\n")
@@ -579,7 +596,7 @@ def MAIN():
         elif(type_of_inst)=="U":
             binary=utype(instr)
             if(binary)==False:
-                f.write(f"Line->{num}SyntaxError PC->{PC}")
+                f.write(f"Line->{num} SyntaxError PC->{PC}")
                 return
             else:
                 f.write(f"{binary}\n")
