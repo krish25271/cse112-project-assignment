@@ -419,7 +419,7 @@ def check_B_type_validity(line):
     if rs1 not in d or rs2 not in d:# Valid register type check
         return False
     
-    if labels.isdigit()==False and labels not in Labels:# Valid Label check
+    if (labels.isdigit()==False and labels not in Labels) and (labels[0]=='-' and labels[1:].isdigit()==False):# Valid Label check
         return False
     return True
 
@@ -454,7 +454,7 @@ def B_type(instructions,PC_address):
 
     def find_Immediate(PC_address,label_address):
         return label_address-PC_address
-    if Label.isdigit():
+    if (Label[0]=='-' and Label[1:].isdigit()) or Label.isdigit():
         immediate=int(Label)
     else:
         label_address=Labels[Label]
@@ -477,13 +477,13 @@ def B_type(instructions,PC_address):
         imm_bin=format(immediate & 0x1FFF,"013b")#sign extension of immediate
 
         imm_12=imm_bin[0]
-        imm_10_5=imm_bin[1:7]
-        imm_4_1=imm_bin[7:11]
-        imm_11=imm_bin[11]
+        imm_10_5=imm_bin[2:8]
+        imm_4_1=imm_bin[8:12]
+        imm_11=imm_bin[1]
 
         func3=B_instructions[instruction]
 
-        bin_inst=imm_12 + imm_10_5 + rs1_bin + rs2_bin + func3 + imm_4_1 + imm_11 + B_opcode# final instruction in binary
+        bin_inst=imm_12 + imm_10_5 + rs2_bin + rs1_bin + func3 + imm_4_1 + imm_11 + B_opcode# final instruction in binary
         
         return bin_inst
 
