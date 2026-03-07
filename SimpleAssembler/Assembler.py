@@ -46,6 +46,14 @@ d= {
 }
 Registers = d
 
+
+def Striper(instruction):
+    instruction=instruction.strip()     
+    instruction=instruction.replace(", ",",")   #remove the white spaces after comma
+    instruction=instruction.replace(" ,",",")   #remove the white spaces before comma
+    return instruction
+
+
 def RTYPE(instruction):
     inst1=instruction.split()   #split on the basis of space 
     islabel=False
@@ -175,7 +183,7 @@ def ierror(s):
             pass
         else:
             return 1
-        x1=re.split(",|\(|\)",x[1])                                         #splitting instruction on '(',')' and ','
+        x1 = re.split(r"[(),]", x[1])                                         #splitting instruction on '(',')' and ','
         if(len(x1)!=4):                                                     #checking if it splits in 4 parts
             return 1
         if((x1[0] not in d.values() and x1[0] not in d) or (x1[2] not in d.values() and x1[2] not in d)):  #to check if register names are valid names
@@ -237,12 +245,12 @@ def itype(s):
        elif(x[0]=="sltiu"):
            func3="011"
            opcode="0010011"
-        else:
+       else:
             func3="000"
             opcode="1100111"
        return imm+rs+func3+rd+opcode
     else:
-        x1=re.split(",|\(|\)",x[1])         #splitting on "," ,")","("
+        x1 = re.split(r"[(),]", x[1])       #splitting on "," ,")","("
         imm=f"{int(x1[1]) & 0xFFF:012b}"    #to convert immediate in 12 bits binary
         if(x1[0][0]=='x'):                   #to check if the naming of rd register is ABI naming or not
             rd=x1[0].lstrip("x") 
@@ -532,8 +540,8 @@ def identify_instruction(instruction):
 
 def MAIN():
     global PC
-    assembly_file=sys.argv[1];
-    machine_code_file=sys.argv[2];
+    assembly_file=sys.argv[1]
+    machine_code_file=sys.argv[2]
     with open(assembly_file,"r") as f:
         global lines
         lines=f.readlines()
@@ -544,6 +552,7 @@ def MAIN():
     for instr in lines:
         if(instr==""):
             continue
+        lines[num]=Striper(lines[num])     #remove extra spaces and new line characters
         type_of_inst=identify_instruction(lines[num])
         instr=instr.rstrip("\n")
         num=num+1
