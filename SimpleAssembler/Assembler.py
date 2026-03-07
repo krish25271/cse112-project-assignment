@@ -1,5 +1,4 @@
 import re
-import sys
 #Some Global Variables
 PC = 0x00000000
 Label_validity = {}  #key->Label-address;value->True/False
@@ -317,73 +316,4 @@ def find_label():
             lines[i] = lines[i][j+2:]       #instruction without labels
             lines[i] = lines[i].strip()     #remove white spaces
         temp1+=4
-def MAIN():
-    global PC
-    assembly_file=sys.argv[1];
-    machine_code_file=sys.argv[2];
-    with open(assembly_file,"r") as f:
-        global lines
-        lines=f.readlines()
-    find_label()
-    f=open(machine_code_file,"w")
-    num=0
-    write_lst=[]
-    for instr in lines:
-        if(instr==""):
-            continue
-        type_of_inst=identify_instruction(lines[num])
-        instr=instr.rstrip("\n")
-        num=num+1
-        if PC in Label_validity and Label_validity[PC] == False:        #Invalid label, break
-            print(f"Line->{num} SyntaxError PC->{PC}")
-            break
-        if(type_of_inst)==False:
-            print(f"Line->{num} SyntaxError PC->{PC}")
-            return
-        if(type_of_inst)=="R":
-            binary=RTYPE(instr)
-            if(binary)==False:
-                print(f"Line->{num} SyntaxError PC->{PC}")
-                return
-            else:
-                write_lst.append(f"{binary}\n")
-        elif(type_of_inst)=="B":
-            binary=B_type(instr,PC)
-            if(binary)==False:
-                print(f"Line->{num} SyntaxError PC->{PC}")
-                return
-            else:
-                write_lst.append(f"{binary}\n")
-        elif(type_of_inst)=="J":
-            binary=Jtype(instr)
-            if(binary)==False:
-                print(f"Line->{num} SyntaxError PC->{PC}")
-                return
-            else:
-                write_lst.append(f"{binary}\n")
-        elif(type_of_inst)=="S":
-            binary=Stype(instr)
-            if(binary)==False:
-                print(f"Line->{num} SyntaxError PC->{PC}")
-                return
-            else:
-                write_lst.append(f"{binary}\n")
-        elif(type_of_inst)=="I":
-            binary=itype(instr)
-            if(binary)==False:
-                print(f"Line-> {num} SyntaxError PC->{PC}")
-                return
-            else:
-                write_lst.append(f"{binary}\n")
-        elif(type_of_inst)=="U":
-            binary=utype(instr)
-            if(binary)==False:
-                print(f"Line->{num} SyntaxError PC->{PC}")
-                return
-            else:
-                write_lst.append(f"{binary}\n")
-        PC=PC+4
-    f.writelines(write_lst)
-    
-MAIN()
 
