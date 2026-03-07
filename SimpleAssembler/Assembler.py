@@ -446,6 +446,8 @@ def check_B_type_validity(line):
     rs1 = parts[1]
     rs2 = parts[3]
     labels = parts[5]
+    valid_label,int_label=Immediate(labels)
+    
 
     if parts[2]!=',' or parts[4]!=',':# comma position check
         return False
@@ -456,10 +458,11 @@ def check_B_type_validity(line):
     if rs1 not in d or rs2 not in d:# Valid register type check
         return False
     
-    if (labels.isdigit()==False and labels not in Labels) and (labels[0]=='-' and labels[1:].isdigit()==False):# Valid Label check
+    if valid_label==False and labels not in Labels:# Valid Label check
         return False
     return True
-
+    
+    
 def B_type(instructions,PC_address):
     B_instructions={
         "beq":  "000",
@@ -491,8 +494,10 @@ def B_type(instructions,PC_address):
 
     def find_Immediate(PC_address,label_address):
         return label_address-PC_address
-    if (Label[0]=='-' and Label[1:].isdigit()) or Label.isdigit():
-        immediate=int(Label)
+    
+    valid_label,int_label=Immediate(Label)
+    if valid_label==True:
+        immediate=int_label
     else:
         label_address=Labels[Label]
         immediate=find_Immediate(PC_address,label_address)
@@ -508,7 +513,6 @@ def B_type(instructions,PC_address):
         if immediate < -4096 or immediate > 4094:
             return False
         
-        immediate=immediate>>1
         rs1_bin=format(registers[rs1],"05b")
         rs2_bin=format(registers[rs2],"05b")
         imm_bin=format(immediate & 0x1FFF,"013b")#sign extension of immediate
