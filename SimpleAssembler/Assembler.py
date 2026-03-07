@@ -53,6 +53,20 @@ def Striper(instruction):
     instruction=instruction.replace(" ,",",")   #remove the white spaces before comma
     return instruction
 
+def immediate(imm):
+    flag = True
+    if ("0x" in imm or "0b" in imm) and (imm[2:].isdigit() or (imm[0]== '-' and imm[3:].isdigit())):
+        imm_int = int(imm,0)
+    elif imm[0] == "-" and imm[1:].isdigit():
+        imm_int = int(imm)
+    elif imm.isdigit():
+        imm_int = int(imm)
+    else:
+        flag = False
+    if flag == True:
+        return (flag,imm_int)
+    else:
+        return (flag,0)
 
 def RTYPE(instruction):
     inst1=instruction.split()   #split on the basis of space 
@@ -197,9 +211,6 @@ def ierror(s):
             return 1
     return 0
 
-
-
-
 #to check erros in U type instructions (returns 1 if error and 0 otherwise)
 def uerror(s):
     x=s.split()       #splitting instruction on space
@@ -284,21 +295,25 @@ def utype(s):
     else:
         opcode="0110111"
     return imm+rd+opcode
+
 def Jtype(instr):
     opcode = '1101111'      #opcode for j-type instr
 
     lst = instr.split()     #components of instr
     ra = ''
     register,label = '',''
+    imm_int = 0
+    imm_valid = False
     #commas, space
     flag = True
     if (len(lst) != 2) or (lst[0] != "jal") or ("," not in lst[1]) or (len(lst[1].split(','))!=2 ):
         flag = False
     else:
         register, label = lst[1].split(",")
-        if label not in Labels:
+        imm_valid, imm_int = immediate(label)
+        if label not in Labels and (not imm_valid):
             flag = False
-        else:
+        elif label in Labels:
             label_location = Labels[label]
         if register not in Registers.keys():
             if register not in Registers.values():
@@ -314,8 +329,14 @@ def Jtype(instr):
     ra = str(bin(ra))[2:]
     while len(ra)<5:                #extend to 5bits
         ra="0"+ra
+    if imm_valid == False:                #imm is not directly present
+        imm_int = label_location - PC           #Immediate Calc from PC
 
-    imm_int = label_location - PC           #Immediate Calc
+    if(-(2**19)<=imm_int<=(2**19)-1):      #to check if immediate is of 20 bits
+        pass
+    else:
+        return False
+    
     imm_str, imm_str_temp = '',''
     #Sign extension of imm-int into binary of 20 bits
     if imm_int < 0:
@@ -336,7 +357,8 @@ def Jtype(instr):
 def Stype(instr):
     opcode = '0100011'      #opcode and funct3 values for s-type instr
     funct3 = '010'
-
+    imm_valid = False
+    imm_int = 0
     lst = instr.split()     #components of instr
     data = ''
     src =''
@@ -371,6 +393,9 @@ def Stype(instr):
                 flag = False
             else:
                 imm_str = rest[0:open]
+                imm_valid, imm_int = immediate(imm_str)
+                if not imm_valid:
+                    flag = False
                 src = rest[open+1:close]
                 if src not in Registers.keys():
                     if src not in Registers.values():
@@ -386,7 +411,11 @@ def Stype(instr):
     while len(data)<5:      #Bit extension to 5
         data="0"+data
     
-    imm_bin = int(imm_str)
+    imm_bin = imm_int
+    if(-(2**11)<=imm_bin<=(2**11)-1):      #to check if immediate is of 12 bits
+        pass
+    else:
+        return False
     if imm_bin < 0:     #Sign extension of imm-bin to 12 bits
         imm_bin = str(bin(imm_bin))[3:]
         while(len(imm_bin)<12):
@@ -549,6 +578,18 @@ def MAIN():
     f=open(machine_code_file,"w")
     num=0
     write_lst=[]
+    #Virtual-Halt Error Checking and Program Memory Limit
+    if len(lines)<=64:
+        halt = B_type(Striper(lines[-1]))
+        if halt == "00000000000000000000000001100011":
+            pass
+        else:
+            print(f"Line->{len(lines)} SyntaxError PC->{PC+(4*len(lines))}")
+            return
+    else:
+        print(f"Line->65 SyntaxError PC->{program_memory_limit}")
+        return
+    
     for instr in lines:
         if(instr==""):
             continue
