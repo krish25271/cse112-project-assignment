@@ -4,7 +4,7 @@ import sys
 PC = 0x00000000
 Label_validity = {}  #key->Label-address;value->True/False
 write_lst = []       #binary-encoding-lst (with errors)
-Labels = {'0':0}          #key->Label-name;value->Label-address
+Labels = {}          #key->Label-name;value->Label-address
 program_memory_limit = 0x000000FF
 data_memory_limit = [0x00010000,0x0001007F]
 sp = 0x0000017F
@@ -419,7 +419,7 @@ def check_B_type_validity(line):
     if rs1 not in d or rs2 not in d:# Valid register type check
         return False
     
-    if labels not in Labels:# Valid Label check
+    if labels.isdigit()==False and labels not in Labels:# Valid Label check
         return False
     return True
 
@@ -439,7 +439,6 @@ def B_type(instructions,PC_address):
     rs1=instructions.split()[1]
     Label=instructions.split()[5]
     rs2=instructions.split()[3]
-    label_address=Labels[Label]
 
     registers = {
         f"x{i}": i for i in range(32)
@@ -455,8 +454,11 @@ def B_type(instructions,PC_address):
 
     def find_Immediate(PC_address,label_address):
         return label_address-PC_address
-    
-    immediate=find_Immediate(PC_address,label_address)
+    if Label.isdigit():
+        immediate=int(Label)
+    else:
+        label_address=Labels[Label]
+        immediate=find_Immediate(PC_address,label_address)
 
     
     def decode_B_type(instruction,rs1,rs2,immediate):
