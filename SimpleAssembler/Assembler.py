@@ -456,7 +456,7 @@ def check_B_type_validity(line):
     rs1 = parts[1]
     rs2 = parts[3]
     labels = parts[5]
-    valid_label,int_label=Immediate(labels)
+    valid_label,int_label=immediate(labels)
     
 
     if parts[2]!=',' or parts[4]!=',':# comma position check
