@@ -149,39 +149,39 @@ def RTYPE(instruction):
         return False
 
 
-
+#to check errors in I type instruction (return 1 if error and 0 otherwise)
 def ierror(s):
-    x=s.split()
-    if(len(x)!=2):
+    x=s.split()    #splitting instruction on space
+    if(len(x)!=2):      #to check if there is just 1 space
         return 1
-    if(x[0] in ["addi","sltiu","jalr"]):
+    if(x[0] in ["addi","sltiu","jalr"]):   
         x1=x[1].split(",")
-        if(len(x1)!=3):
+        if(len(x1)!=3):               #to check if there are 2 commas
             return 1
-        if((x1[0] not in d.values() and x1[0] not in d) or (x1[1] not in d.values() and x1[1] not in d)):
+        if((x1[0] not in d.values() and x1[0] not in d) or (x1[1] not in d.values() and x1[1] not in d)):    #to check if register names are valid names
             return 1
-        if((x1[2].lstrip("-")).isdecimal()):
-            if(-(2**11)<=int(x1[2])<=(2**11)-1):
+        if((x1[2].lstrip("-")).isdecimal()):                    
+            if(-(2**11)<=int(x1[2])<=(2**11)-1):        #to check if immediate is of 12 bits
                 pass
             else:
                 return 1
         else:
             return 1
     else:
-        if(x[1].count(",")!=1 or x[1].count("(")!=1 or x[1].count(")")!=1):
+        if(x[1].count(",")!=1 or x[1].count("(")!=1 or x[1].count(")")!=1):  #to check if there are 1 each of ')','(' and ',' in lw instruction
             return 1
             
-        if(x[1].endswith(")")):
+        if(x[1].endswith(")")):                                             #to check if the instruction ends with')'
             pass
         else:
             return 1
-        x1=re.split(",|\(|\)",x[1])
-        if(len(x1)!=4):
+        x1=re.split(",|\(|\)",x[1])                                         #splitting instruction on '(',')' and ','
+        if(len(x1)!=4):                                                     #checking if it splits in 4 parts
             return 1
-        if((x1[0] not in d.values() and x1[0] not in d) or (x1[2] not in d.values() and x1[2] not in d)):
+        if((x1[0] not in d.values() and x1[0] not in d) or (x1[2] not in d.values() and x1[2] not in d)):  #to check if register names are valid names
             return 1
         if((x1[1].lstrip("-")).isdecimal()):
-            if(-(2**11)<=int(x1[1])<=(2**11)-1):
+            if(-(2**11)<=int(x1[1])<=(2**11)-1):                      #to check if immediate is of 12 bits
                 pass
             else:
                 return 1
@@ -192,18 +192,18 @@ def ierror(s):
 
 
 
-
+#to check erros in U type instructions (returns 1 if error and 0 otherwise)
 def uerror(s):
-    x=s.split()
-    if(len(x)!=2):
+    x=s.split()       #splitting instruction on space
+    if(len(x)!=2):    #to check if there is just 1 space
         return 1
-    x1=x[1].split(",")
-    if(len(x1)!=2):
+    x1=x[1].split(",")    # splitting instruction on comma
+    if(len(x1)!=2):       #to check if there is 1 comma
         return 1
-    if(x1[0] not in d.values() and x1[0] not in d):
+    if(x1[0] not in d.values() and x1[0] not in d):    #to check if register names are valid names
         return 1
     if((x1[1].lstrip("-")).isdecimal()):
-        if(-(2**19)<=int(x1[1])<=(2**19)-1):
+        if(-(2**19)<=int(x1[1])<=(2**19)-1):      #to check if immediate is of 20 bits
             pass
         else:
             return 1
@@ -212,67 +212,66 @@ def uerror(s):
     return 0
 
 def itype(s):
-    flag=ierror(s)
+    flag=ierror(s)       #to check for errors in I type instructions
     if(flag==1):
         return 0
-    x=s.split()
+    x=s.split()                 # splitting on space
     if(x[0] in ["addi","sltiu","jalr"]):
-       x1=x[1].split(",")
-       imm=f"{int(x1[2]) & 0xFFF:012b}"
-       if(x1[0][0]=='x'):
+       x1=x[1].split(",")                 #splitting on commas
+       imm=f"{int(x1[2]) & 0xFFF:012b}"    #to convert immediate in 12 bits binary
+       if(x1[0][0]=='x'):                    #to check if the naming of rd register is ABI naming or not
            rd=x1[0].lstrip("x")
        else:
            rd=d[x1[0]].lstrip("x")
        rd=int(rd)
-       rd=f"{rd & 0xFFF:05b}"
-       if(x1[1][0]=='x'):
+       rd=f"{rd & 0xFFF:05b}"                 #converting rd to its corresponding binary number representation
+       if(x1[1][0]=='x'):                     #to check if the naming of rs register is ABI naming or not
            rs=x1[1].lstrip("x")
        else:
            rs=d[x1[1]].lstrip("x")
        rs=int(rs)
-       rs=f"{rs & 0xFFF:05b}"
-       if(x[0]=="addi"):
+       rs=f"{rs & 0xFFF:05b}"            #converting rs to its corresponding binary number representation
+       if(x[0]=="addi"):                 # to find func3 and opcode   
            func3="000"
-       else:
+           opcode="0010011"
+       elif(x[0]=="sltiu"):
            func3="011"
-       return imm+rs+func3+rd+"0010011"
+           opcode="0010011"
+        else:
+            func3="000"
+            opcode="1100111"
+       return imm+rs+func3+rd+opcode
     else:
-        x1=re.split(",|\(|\)",x[1])
-        imm=f"{int(x1[1]) & 0xFFF:012b}"
-        if(x1[0][0]=='x'):
-            rd=x1[0].lstrip("x")
+        x1=re.split(",|\(|\)",x[1])         #splitting on "," ,")","("
+        imm=f"{int(x1[1]) & 0xFFF:012b}"    #to convert immediate in 12 bits binary
+        if(x1[0][0]=='x'):                   #to check if the naming of rd register is ABI naming or not
+            rd=x1[0].lstrip("x") 
         else:
             rd=d[x1[0]].lstrip("x")
-        rd=int(rd)
-        rd=f"{rd & 0xFFF:05b}"
-        if(x1[2][0]=='x'):
+        rd=int(rd)                         
+        rd=f"{rd & 0xFFF:05b}"                #converting rd to its corresponding binary number representation
+        if(x1[2][0]=='x'):                     #to check if the naming of rs register is ABI naming or not
             rs=x1[2].lstrip("x")
         else:
             rs=d[x1[2]].lstrip("x")
         rs=int(rs)
-        rs=f"{rs & 0xFFF:05b}"
-        if(x[0]=="lw"):
-            func3="010"
-            opcode="0000011"
-        else:
-            func3="000"
-            opcode="1100111"
-        return imm+rs+func3+rd+opcode
+        rs=f"{rs & 0xFFF:05b}"                 #converting rs to its corresponding binary number representation
+        return imm+rs+"010"+rd+"0000011"
     
 def utype(s):
-    flag=uerror(s)
+    flag=uerror(s)        #to check for errors
     if(flag==1):
         return 0
-    x=s.split()
-    x1=x[1].split(",")
-    imm=f"{int(x1[1]) & 0xFFFFF:020b}"
-    if(x1[0][0]=='x'):
+    x=s.split()         #splitting on space
+    x1=x[1].split(",")           #splitting on commas
+    imm=f"{int(x1[1]) & 0xFFFFF:020b}"     #converting immediate to 20 bits binary
+    if(x1[0][0]=='x'):                     #to check if the naming of rd register is ABI naming or not
         rd=x1[0].lstrip("x")
     else:
         rd=d[x1[0]].lstrip("x")
     rd=int(rd)
-    rd=f"{rd & 0xFFF:05b}"
-    if(x[0]=="auipc"):
+    rd=f"{rd & 0xFFF:05b}"                #converting rd to its corresponding binary number representation
+    if(x[0]=="auipc"):                    # to find opcode
         opcode="0010111"
     else:
         opcode="0110111"
