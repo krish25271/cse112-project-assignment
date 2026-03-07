@@ -547,7 +547,7 @@ def MAIN():
         num=num+1
         if PC in Label_validity and Label_validity[PC] == False:        #Invalid label, break
             print(f"Line->{num} SyntaxError PC->{PC}")
-            break
+            return
         if(type_of_inst)==False:
             print(f"Line->{num} SyntaxError PC->{PC}")
             return
