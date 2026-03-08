@@ -509,27 +509,27 @@ def B_type(instructions,PC_address):
     def find_Immediate(PC_address,label_address):
         return label_address-PC_address
     
-    valid_label,int_label=Immediate(Label)
+    valid_label,int_label=immediate(Label)
     if valid_label==True:
-        immediate=int_label
+        Immediate=int_label
     else:
         label_address=Labels[Label]
-        immediate=find_Immediate(PC_address,label_address)
+        Immediate=find_Immediate(PC_address,label_address)
 
     
-    def decode_B_type(instruction,rs1,rs2,immediate):
+    def decode_B_type(instruction,rs1,rs2,Immediate):
         if instruction not in B_instructions:
             return False
         
         if rs1 not in registers or rs2 not in registers:
             return False
 
-        if immediate < -4096 or immediate > 4094:
+        if Immediate < -4096 or Immediate > 4094:
             return False
         
         rs1_bin=format(registers[rs1],"05b")
         rs2_bin=format(registers[rs2],"05b")
-        imm_bin=format(immediate & 0x1FFF,"013b")#sign extension of immediate
+        imm_bin=format(Immediate & 0x1FFF,"013b")#sign extension of immediate
 
         imm_12=imm_bin[0]
         imm_10_5=imm_bin[2:8]
@@ -542,7 +542,7 @@ def B_type(instructions,PC_address):
         
         return bin_inst
 
-    Decoded_instruction=decode_B_type(instruction,rs1,rs2,immediate)
+    Decoded_instruction=decode_B_type(instruction,rs1,rs2,Immediate)
     return Decoded_instruction
 
 def find_label():
@@ -598,7 +598,7 @@ def MAIN():
     write_lst=[]
     #Virtual-Halt Error Checking and Program Memory Limit
     if len(lines)<=64:
-        halt = B_type(Striper(lines[-1]))
+        halt = B_type(Striper(lines[-1]),PC)
         if halt == "00000000000000000000000001100011":
             pass
         else:
