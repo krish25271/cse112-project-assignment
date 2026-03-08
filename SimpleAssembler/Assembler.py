@@ -51,6 +51,10 @@ def Striper(instruction):
     instruction=instruction.strip()     
     instruction=instruction.replace(", ",",")   #remove the white spaces after comma
     instruction=instruction.replace(" ,",",")   #remove the white spaces before comma
+    instruction=instruction.split()
+    instruction=[i for i in instruction if i!=""]
+    instruction[0]=instruction[0]+' '
+    instruction="".join(instruction)
     return instruction
 
 def immediate(imm):
