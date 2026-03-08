@@ -355,14 +355,15 @@ def Jtype(instr):
     #Sign extension of imm-int into binary of 20 bits
     if imm_int < 0:
         imm_str_temp = str(bin(imm_int))[3:]
-        while(len(imm_str_temp)<20):
+        while(len(imm_str_temp)<21):
             imm_str_temp = '1' + imm_str_temp
     else:
         imm_str_temp = str(bin(imm_int))[2:]
-        while(len(imm_str_temp)<20):
+        while(len(imm_str_temp)<21):
             imm_str_temp = '0' + imm_str_temp 
     
     #Format of immediate in j-type is imm-str
+    imm_str_temp = imm_str_temp[-21:-1]
     imm_str = imm_str_temp[-20]+ imm_str_temp[-10:-1]+ imm_str_temp[-1]+ imm_str_temp[-11] + imm_str_temp[-19:-12] + imm_str_temp[-12]
     
     bin_instr = imm_str + ra + opcode
@@ -597,7 +598,7 @@ def MAIN():
     num=0
     write_lst=[]
     #Virtual-Halt Error Checking and Program Memory Limit
-    if len(lines)<=64:
+    '''if len(lines)<=64:
         halt = B_type(Striper(lines[-1]),PC)
         if halt == "00000000000000000000000001100011":
             pass
@@ -606,13 +607,14 @@ def MAIN():
             return
     else:
         print(f"Line->65 SyntaxError PC->{program_memory_limit}")
-        return
+        return'''
     
     for instr in lines:
         if(instr==""):
             continue
         lines[num]=Striper(lines[num])     #remove extra spaces and new line characters
         type_of_inst=identify_instruction(lines[num])
+        instr = lines[num]
         instr=instr.rstrip("\n")
         num=num+1
         if PC in Label_validity and Label_validity[PC] == False:        #Invalid label, break
