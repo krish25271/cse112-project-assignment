@@ -597,17 +597,6 @@ def MAIN():
     f=open(machine_code_file,"w")
     num=0
     write_lst=[]
-    #Virtual-Halt Error Checking and Program Memory Limit
-    '''if len(lines)<=64:
-        halt = B_type(Striper(lines[-1]),PC)
-        if halt == "00000000000000000000000001100011":
-            pass
-        else:
-            print(f"Line->{len(lines)} SyntaxError PC->{PC+(4*len(lines))}")
-            return
-    else:
-        print(f"Line->65 SyntaxError PC->{program_memory_limit}")
-        return'''
     
     for instr in lines:
         if(instr==""):
@@ -666,6 +655,12 @@ def MAIN():
             else:
                 write_lst.append(f"{binary}\n")
         PC=PC+4
+    #Virtual-Halt Error Checking
+    halt = "00000000000000000000000001100011\n"
+    if halt not in write_lst:
+        print("Syntax Error. Missing Halt")
+        return
+    
     f.writelines(write_lst)
     
 MAIN()
