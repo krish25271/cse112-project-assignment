@@ -586,6 +586,22 @@ def identify_instruction(instruction):
         
     return False
 
+def checklabel():
+    halt = "00000000000000000000000001100011\n"
+    pc = 0
+    index = 0
+    
+    for x in write_lst:
+        if x == halt:
+            index = pc
+            break
+        pc+=4
+    
+    if index+4 in Labels.values():
+        return True
+    else:
+        return False
+    
 def MAIN():
     global PC
     assembly_file=sys.argv[1]
@@ -596,7 +612,7 @@ def MAIN():
     find_label()
     f=open(machine_code_file,"w")
     num=0
-    write_lst=[]
+    global write_lst
     
     for instr in lines:
         if(instr==""):
@@ -660,7 +676,17 @@ def MAIN():
     if halt not in write_lst:
         print("Syntax Error. Missing Halt")
         return
-    
+    if len(lines)<=64:
+        if write_lst[-1] == halt:
+            pass
+        else:
+            if checklabel(): pass
+            else:
+                print(f"Line->{len(lines)} SyntaxError PC->{PC+(4*len(lines))}")
+                return
+    else:
+        print(f"Line->65 SyntaxError PC->{program_memory_limit}")
+        return
     f.writelines(write_lst)
     
 MAIN()
